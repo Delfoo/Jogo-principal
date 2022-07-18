@@ -6,12 +6,19 @@ var fase1 = new Phaser.Scene("Fase 1");
 
 // Variáveis locais
 var map;
-var tileset0;
-var terreno;
-var tileset1;
-var ARCas;
+var book1;
+var book2;
+var book3;
+var book4;
+var book5;
+var book6;
+var book7;
 var player1;
 var player2;
+var inventoryText;
+var inventory = 0;
+var sombra;
+var mapa;
 var bot1;
 var parede;
 var texto;
@@ -22,8 +29,6 @@ var touchY;
 var timedEvent;
 var timer = -1;
 var timerText;
-var life = 0;
-var lifeText;
 var trilha;
 var jogador;
 var socket
@@ -37,34 +42,42 @@ const audio = document.querySelector("audio");
 
 fase1.preload = function () {
   // Tilesets
-  this.load.image("terreno", "assets/terreno.png");
-  this.load.image("ARCas", "assets/ARCas.png");
-
+  this.load.image("bibli", "assets/bibli.png");
   // Tilemap
-  this.load.tilemapTiledJSON("map", "assets/cena1.json");
+  this.load.tilemapTiledJSON("map", "assets/biblioteca.json");
 
   // Jogador 1
-  this.load.spritesheet("player1", "assets/player1.png", {
-    frameWidth: 60,
-    frameHeight: 60,
-  });
+  this.load.spritesheet("player1", "./assets/player1.png", { frameWidth: 72, frameHeight: 72, });
 
   // Jogador 2
   this.load.spritesheet("player2", "assets/player2.png", {
-    frameWidth: 60,
-    frameHeight: 60,
+    frameWidth: 72,
+    frameHeight: 72,
   });
 
-  this.load.spritesheet("bot1", "assets/bot1.png", {
-    frameWidth: 60,
-    frameHeight: 60,
-  });
+  //Sombra
+  this.load.spritesheet("sombra", "./assets/sombra.png", { frameWidth: 960, frameHeight: 960, });
+ 
+  //Coletaveis
+  this.load.spritesheet("book1", "./assets/book1.png", { frameWidth: 1000, frameHeight: 1000, });
+  this.load.spritesheet("book2", "./assets/book2.png", { frameWidth: 1000, frameHeight: 1000, });
+  this.load.spritesheet("book3", "./assets/book3.png", { frameWidth: 1000, frameHeight: 1000, });
+  this.load.spritesheet("book4", "./assets/book4.png", { frameWidth: 1000, frameHeight: 1000, });
+  this.load.spritesheet("book5", "./assets/book5.png", { frameWidth: 1000, frameHeight: 1000, });
+  this.load.spritesheet("book6", "./assets/book6.png", { frameWidth: 1000, frameHeight: 1000, });
+  this.load.spritesheet("book7", "./assets/book7.png", { frameWidth: 1000, frameHeight: 1000, });
+  
+  //Mapa
+  this.load.spritesheet("mapa", "./assets/world.png", { frameWidth: 640, frameHeight: 360, });
+  //this.load.spritesheet("bot1", "assets/bot1.png", {frameWidth: 60,frameHeight: 60,});
   // Trilha sonora
   this.load.audio("trilha", "assets/cena1.mp3");
 
   // Efeitos sonoros
   this.load.audio("parede", "assets/parede.mp3");
   this.load.audio("voz", "assets/voz.mp3");
+
+  sombra = this.physics.add.sprite(100, 800, "sombra")
 
 
   // Tela cheia
@@ -90,7 +103,7 @@ fase1.preload = function () {
     frameWidth: 64,
     frameHeight: 64,
   });
-  texto = this.add.text(120, 80, "Parabéns você é gay").setVisible(false);
+  //texto = this.add.text(120, 80, "Parabéns você é gay").setVisible(false);
 };
 
 fase1.create = function () {
@@ -103,34 +116,35 @@ fase1.create = function () {
   voz = this.sound.add("voz");
 
   // Tilemap
-  map = this.make.tilemap({ key: "map" });
-
-  // Tilesets
-  tileset0 = map.addTilesetImage("terreno", "terreno");
-  tileset1 = map.addTilesetImage("ARCas", "ARCas");
-
-  // Camada 1: terreno
-  terreno = map.createStaticLayer("terreno", tileset0, 0, 0);
-  terreno.setCollisionByProperty({ collides: true });
+  //Mapa e Colisão
+  const map = this.make.tilemap({ key: "map" });
+  const tileset = map.addTilesetImage("bibli", "bibli");
+  const belowLayer = map.createStaticLayer("belowplayer", tileset, 0, 0);
+  const worldLayer = map.createStaticLayer("world", tileset, 0, 0);
+  worldLayer.setCollisionByProperty({ collides: true });
 
   // Personagens
-  player1 = this.physics.add.sprite(400, 300, "player1");
-  player2 = this.physics.add.sprite(300, 400, "player2");
-  bot1 = this.physics.add.sprite(350, 50, "bot1");
-
-  player1.setSize(25, 35, true);
-  player2.setSize(25, 35, true);
-  bot1.setSize(35, 45, true);
+  player1 = this.physics.add.sprite(47, 940, "player1", 0).setScale(0.4);
+  player1.setSize(36, 60, true);
+  player2 = this.physics.add.sprite(910, 940, "player2").setScale(0.4);
+  player2.setSize(100, 120, true);
 
   player1.body.immovable = true;
   player2.body.immovable = true;
+
+  //Colisão Player e Mundo
+  var physics = this.physics;
+    physics.add.collider(player1, worldLayer);
+    player1.setCollideWorldBounds(true);
+    physics.add.collider(player2, worldLayer);
+    player2.setCollideWorldBounds(true);
 
   // Animação do jogador 1: a esquerda
   this.anims.create({
     key: "left1",
     frames: this.anims.generateFrameNumbers("player1", {
       start: 4,
-      end: 6,
+      end: 7,
     }),
     frameRate: 10,
     repeat: -1,
@@ -141,7 +155,7 @@ fase1.create = function () {
     key: "left2",
     frames: this.anims.generateFrameNumbers("player2", {
       start: 4,
-      end: 6,
+      end: 7,
     }),
     frameRate: 10,
     repeat: -1,
@@ -151,8 +165,8 @@ fase1.create = function () {
   this.anims.create({
     key: "right1",
     frames: this.anims.generateFrameNumbers("player1", {
-      start: 7,
-      end: 9,
+      start: 8,
+      end: 11,
     }),
     frameRate: 10,
     repeat: -1,
@@ -162,7 +176,7 @@ fase1.create = function () {
   this.anims.create({
     key: "descendo1",
     frames: this.anims.generateFrameNumbers("player1", {
-      start: 1,
+      start: 0,
       end: 3,
     }),
     frameRate: 10,
@@ -173,8 +187,8 @@ fase1.create = function () {
   this.anims.create({
     key: "subindo1",
     frames: this.anims.generateFrameNumbers("player1", {
-      start: 10,
-      end: 12,
+      start: 12,
+      end: 15,
     }),
     frameRate: 10,
     repeat: -1,
@@ -184,7 +198,7 @@ fase1.create = function () {
   this.anims.create({
     key: "descendo2",
     frames: this.anims.generateFrameNumbers("player2", {
-      start: 1,
+      start: 0,
       end: 3,
     }),
     frameRate: 10,
@@ -195,8 +209,8 @@ fase1.create = function () {
   this.anims.create({
     key: "subindo2",
     frames: this.anims.generateFrameNumbers("player2", {
-      start: 10,
-      end: 12,
+      start: 12,
+      end: 15,
     }),
     frameRate: 10,
     repeat: -1,
@@ -206,25 +220,36 @@ fase1.create = function () {
   this.anims.create({
     key: "right2",
     frames: this.anims.generateFrameNumbers("player2", {
-      start: 7,
-      end: 9,
+      start: 8,
+      end: 11,
     }),
     frameRate: 10,
     repeat: -1,
   });
 
+  //Itens
+  book1 = this.physics.add.sprite(495, 385, "book1").setScale(0.4); //Vermelho OK
+  book2 = this.physics.add.sprite(440, 567, "book2").setScale(0.4); //Amarelo OK
+  book3 = this.physics.add.sprite(913, 47, "book3").setScale(0.4);
+  book4 = this.physics.add.sprite(785, 272, "book4").setScale(0.4);
+  book5 = this.physics.add.sprite(440, 810, "book5").setScale(0.4); //Azul OK
+  book6 = this.physics.add.sprite(495, 50, "book6").setScale(0.4);
+  book7 = this.physics.add.sprite(39, 265, "book7").setScale(0.4); //ok
+  //Sombra
+  sombra = this.physics.add.sprite(100, 800, "sombra")
+  //Coleta dos livros
+  this.physics.add.overlap(player1, book1, collectbook, null, this);
+  this.physics.add.overlap(player1, book2, collectbook, null, this);
+  this.physics.add.overlap(player1, book3, collectbook, null, this);
+  this.physics.add.overlap(player1, book4, collectbook, null, this);
+  this.physics.add.overlap(player1, book5, collectbook, null, this);
+  this.physics.add.overlap(player1, book6, collectbook, null, this);
+  this.physics.add.overlap(player1, book7, collectbook, null, this);
+
   //Animação do bot respirando
-  this.anims.create({
-    key: "random",
-    frames: this.anims.generateFrameNumbers("bot1", {
-      start: 0,
-      end: 1,
-    }),
-    frameRate: 2,
-    repeat: -1,
-  });
-  bot1.anims.play("random", true);
-  bot1.body.immovable = true;
+ // this.anims.create({key: "random",frames: this.anims.generateFrameNumbers("bot1", {start: 0,end: 1,}),frameRate: 2,repeat: -1,});
+ // bot1.anims.play("random", true);
+ // bot1.body.immovable = true;
 
   // Animação do jogador 1: ficar parado (e virado para a direita)
   this.anims.create({
@@ -248,26 +273,8 @@ fase1.create = function () {
     repeat: -1,
   });
 
-  // Camada 2: ARCas
-  ARCas = map.createStaticLayer("ARCas", tileset1, 0, 0);
-  ARCas.setCollisionByProperty({ collides: true });
-
   // Interação por toque de tela (até 2 toques simultâneos: 0 a 1)
   pointer = this.input.addPointer(1);
-
-  // Mostra há quanto tempo estão jogando (a vida dos jogadores)
-  lifeText = this.add.text(20, 24, life, {
-    fontSize: "32px",
-    fill: "#cccccc",
-  });
-  lifeText.setScrollFactor(0);
-
-  // Mostra na tela o contador
-  timerText = this.add.text(16, 16, timer, {
-    fontSize: "32px",
-    fill: "#000000",
-  });
-  timerText.setScrollFactor(0);
 
   // Cena (960x960) maior que a tela (800x600)
   this.cameras.main.setBounds(0, 0, 960, 960);
@@ -329,14 +336,23 @@ fase1.create = function () {
     .setInteractive()
     .setScrollFactor(0);
 
+    //Mapa
+  mapa = this.physics.add.sprite(640, 780, "mapa")
+
+  //Contador
+  timerText = this.add.text(16, 16, timer, {
+    fontSize: "32px",
+    fill: "#ffffff",
+  });
+  timerText.setScrollFactor(0);
+  
   // Conectar no servidor via WebSocket
   socket = io();
 
-  // Disparar evento quando jogador entrar na partida
   var physics = this.physics;
   var cameras = this.cameras;
   var time = this.time;
-
+// Disparar evento quando jogador entrar na partida
   socket.on("jogadores", function (jogadores) {
     if (jogadores.primeiro === socket.id) {
       // Define jogador como o primeiro
@@ -344,17 +360,11 @@ fase1.create = function () {
 
       // Personagens colidem com os limites da cena
       player1.setCollideWorldBounds(true);
+      mapa.setVisible(false);
 
-      // Detecção de colisão: terreno
-      physics.add.collider(player1, terreno, hitCave, null, this);
+      //physics.add.collider(player1, bot1, hitARCa, null, this);
+      //physics.add.collider(player1, bot1, texto, null, this);
 
-      physics.add.collider(player1, player2, baterEspadas, null, this);
-
-      physics.add.collider(player1, bot1, hitARCa, null, this);
-      physics.add.collider(player1, bot1, texto, null, this);
-
-      // Detecção de colisão e disparo de evento: ARCas
-      physics.add.collider(player1, ARCas, hitARCa, null, this);
 
       // Câmera seguindo o personagem 1
       cameras.main.startFollow(player1);
@@ -430,15 +440,10 @@ fase1.create = function () {
       jogador = 2;
 
       // Personagens colidem com os limites da cena
-      player2.setCollideWorldBounds(true);
+sombra.setVisible(false);
+player2.setCollideWorldBounds(true);
 
-      // Detecção de colisão: terreno
-      physics.add.collider(player2, terreno, hitCave, null, this);
-
-      // Detecção de colisão e disparo de evento: ARCas
-      physics.add.collider(player2, ARCas, hitARCa, null, this);
-
-      physics.add.collider(player2, bot1, hitARCa, null, this);
+      //physics.add.collider(player2, bot1, hitARCa, null, this);
 
       // Câmera seguindo o personagem 2
       cameras.main.startFollow(player2);
@@ -588,6 +593,8 @@ fase1.create = function () {
       player1.y = y;
     }
   });
+
+  inventoryText = this.add.text(10, 770, "0", { fontSize: "16px", fill: "#fff", }).setScrollFactor(0)
 };
 fase1.update = function (time, delta) {
   let frame;
@@ -625,30 +632,22 @@ fase1.update = function (time, delta) {
     trilha.stop();
     this.scene.start(fase2);
   }
+
+  sombra.x = player1.body.position.x;
+  sombra.y = player1.body.position.y;
 };
 
-function hitCave(player, terreno) {
-  // Ao passar pela frente da caverna, toca o efeito sonoro
-  voz.play();
-}
-
-function hitARCa(player, ARCas) {
-  // Ao colidir com a parede, toca o efeito sonoro
-  parede.play();
-}
-
 function countdown() {
-  // Adiciona o tempo de vida em 1 segundo
-  life += 1;
-  lifeText.setText(life);
-
   // Reduz o contador em 1 segundo
   timer -= 1;
   timerText.setText(timer);
 }
 
-function baterEspadas() {
-  parede.play();
+function collectbook(player1, book1) {
+  //chave some quando coletada
+  book1.disableBody(true, true);
+  inventory += 1;
+  inventoryText.setText(inventory);
 }
 
 // Exportar a cena
