@@ -68,7 +68,7 @@ fase1.preload = function () {
   this.load.spritesheet("book7", "./assets/book7.png", { frameWidth: 1000, frameHeight: 1000, });
   
   //Mapa
-  this.load.spritesheet("mapa", "./assets/world.png", { frameWidth: 640, frameHeight: 360, });
+  this.load.spritesheet("mapa", "./assets/mapi.png", { frameWidth: 640, frameHeight: 360, });
   //this.load.spritesheet("bot1", "assets/bot1.png", {frameWidth: 60,frameHeight: 60,});
   // Trilha sonora
   this.load.audio("trilha", "assets/cena1.mp3");
