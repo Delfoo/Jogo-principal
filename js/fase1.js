@@ -19,6 +19,7 @@ var inventoryText;
 var inventory = 0;
 var sombra;
 var mapa;
+var endgame;
 var bot1;
 var parede;
 var texto;
@@ -56,7 +57,7 @@ fase1.preload = function () {
   });
 
   //Sombra
-  this.load.spritesheet("sombra", "./assets/sombra.png", { frameWidth: 960, frameHeight: 960, });
+  this.load.spritesheet("sombra", "./assets/shadow.png", { frameWidth: 1280, frameHeight: 1280, });
  
   //Coletaveis
   this.load.spritesheet("book1", "./assets/book1.png", { frameWidth: 1000, frameHeight: 1000, });
@@ -68,8 +69,8 @@ fase1.preload = function () {
   this.load.spritesheet("book7", "./assets/book7.png", { frameWidth: 1000, frameHeight: 1000, });
   
   //Mapa
-  this.load.spritesheet("mapa", "./assets/mapi.png", { frameWidth: 640, frameHeight: 360, });
-  //this.load.spritesheet("bot1", "assets/bot1.png", {frameWidth: 60,frameHeight: 60,});
+  this.load.spritesheet("mapa", "./assets/mapo.png", { frameWidth: 1280, frameHeight: 720, });
+  this.load.spritesheet("bot1", "assets/bot.png", {frameWidth: 120,frameHeight: 120,});
   // Trilha sonora
   this.load.audio("trilha", "assets/cena1.mp3");
 
@@ -77,7 +78,7 @@ fase1.preload = function () {
   this.load.audio("parede", "assets/parede.mp3");
   this.load.audio("voz", "assets/voz.mp3");
 
-  sombra = this.physics.add.sprite(100, 800, "sombra")
+  sombra = this.physics.add.sprite(0, 0, "sombra")
 
 
   // Tela cheia
@@ -107,6 +108,9 @@ fase1.preload = function () {
 };
 
 fase1.create = function () {
+
+  endgame = false;
+
   // Trilha sonora
   trilha = this.sound.add("trilha");
   trilha.play();
@@ -128,6 +132,8 @@ fase1.create = function () {
   player1.setSize(36, 60, true);
   player2 = this.physics.add.sprite(910, 940, "player2").setScale(0.4);
   player2.setSize(100, 120, true);
+
+  bot1 = this.physics.add.sprite(792, 35, "bot1").setScale(0.3);
 
   player1.body.immovable = true;
   player2.body.immovable = true;
@@ -236,7 +242,7 @@ fase1.create = function () {
   book6 = this.physics.add.sprite(495, 50, "book6").setScale(0.4);
   book7 = this.physics.add.sprite(39, 265, "book7").setScale(0.4); //ok
   //Sombra
-  sombra = this.physics.add.sprite(100, 800, "sombra")
+  sombra = this.physics.add.sprite(0, 0, "sombra")
   //Coleta dos livros
   this.physics.add.overlap(player1, book1, collectbook, null, this);
   this.physics.add.overlap(player1, book2, collectbook, null, this);
@@ -245,11 +251,13 @@ fase1.create = function () {
   this.physics.add.overlap(player1, book5, collectbook, null, this);
   this.physics.add.overlap(player1, book6, collectbook, null, this);
   this.physics.add.overlap(player1, book7, collectbook, null, this);
+  //
+  this.physics.add.overlap(player1, bot1, touchbot1, null, this);
 
   //Animação do bot respirando
- // this.anims.create({key: "random",frames: this.anims.generateFrameNumbers("bot1", {start: 0,end: 1,}),frameRate: 2,repeat: -1,});
- // bot1.anims.play("random", true);
- // bot1.body.immovable = true;
+ this.anims.create({key: "random",frames: this.anims.generateFrameNumbers("bot1", {start: 0,end: 1,}),frameRate: 2,repeat: -1,});
+ bot1.anims.play("random", true);
+ bot1.body.immovable = true;
 
   // Animação do jogador 1: ficar parado (e virado para a direita)
   this.anims.create({
@@ -337,7 +345,7 @@ fase1.create = function () {
     .setScrollFactor(0);
 
     //Mapa
-  mapa = this.physics.add.sprite(640, 780, "mapa")
+  mapa = this.physics.add.sprite(640, 780, "mapa").setScale(0.5);
 
   //Contador
   timerText = this.add.text(16, 16, timer, {
@@ -368,6 +376,7 @@ fase1.create = function () {
 
       // Câmera seguindo o personagem 1
       cameras.main.startFollow(player1);
+      
 
       // D-pad: para cada direção já os eventos
       // para tocar a tela ("pointerover")
@@ -627,16 +636,44 @@ fase1.update = function (time, delta) {
     });
   }
 
-  // Se o contador chegar a zero, inicia a cena 2
-  if (timer === 0) {
-    trilha.stop();
-    this.scene.start(fase2);
-  }
-
   sombra.x = player1.body.position.x;
   sombra.y = player1.body.position.y;
-};
 
+  
+  if (endgame === true) {
+    socket.emit("estadoDoJogador", sala, {
+      frame: frame,
+      x: player2.body.x,
+      y: player2.body.y,
+    });
+    musicagameplay.stop();
+    this.scene.start(cena2);
+  }
+ 
+   if (inventory === 7 && timer > 0 && endgame === false) {
+    socket.emit("estadoDoJogador", sala, {
+      frame: frame,
+      x: player2.body.x,
+      y: player2.body.y,
+    });
+    musicagameplay.stop();
+    this.scene.start(cena0);
+  }
+ 
+   if (timer === 0) {
+    socket.emit("estadoDoJogador", sala, {
+      frame: frame,
+      x: player2.body.x,
+      y: player2.body.y,
+    });
+    musicagameplay.stop();
+    this.scene.start(fim);
+  }
+};
+function touchbot1(player1, bot1) {
+    endgame = false;
+  }
+  
 function countdown() {
   // Reduz o contador em 1 segundo
   timer -= 1;
@@ -647,7 +684,6 @@ function collectbook(player1, book1) {
   //chave some quando coletada
   book1.disableBody(true, true);
   inventory += 1;
-  inventoryText.setText(inventory);
 }
 
 // Exportar a cena
