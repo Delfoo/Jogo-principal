@@ -1,8 +1,6 @@
 // Importar todas as cenas
 import { inicio } from "./inicio.js";
 import { fase1 } from "./fase1.js";
-import { fase2 } from "./fase2.js";
-
 import { fim } from "./fim.js";
 
 
@@ -26,7 +24,7 @@ const config = {
     width: 640,
     height: 360,
   },
-  scene: [inicio, fase1, fase2,  fim],
+  scene: [inicio, fase1,  fim],
 };
 
 // Criar o objeto principal

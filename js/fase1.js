@@ -1,5 +1,5 @@
 // Importar a próxima cena
-import { fase2 } from "./fase2.js";
+import { fim } from "./fim.js";
 
 // Criar a cena 1
 var fase1 = new Phaser.Scene("Fase 1");
@@ -13,12 +13,13 @@ var book4;
 var book5;
 var book6;
 var book7;
+var camera0;
 var player1;
 var player2;
 var inventoryText;
 var inventory = 0;
 var sombra;
-var mapa;
+var sala;
 var endgame;
 var bot1;
 var parede;
@@ -28,8 +29,7 @@ var pointer;
 var touchX;
 var touchY;
 var timedEvent;
-var timer = -1;
-var timerText;
+var timer = 1000000000;
 var trilha;
 var jogador;
 var socket
@@ -68,8 +68,7 @@ fase1.preload = function () {
   this.load.spritesheet("book6", "./assets/book6.png", { frameWidth: 1000, frameHeight: 1000, });
   this.load.spritesheet("book7", "./assets/book7.png", { frameWidth: 1000, frameHeight: 1000, });
   
-  //Mapa
-  this.load.spritesheet("mapa", "./assets/mapo.png", { frameWidth: 1280, frameHeight: 720, });
+  //Bot
   this.load.spritesheet("bot1", "assets/bot.png", {frameWidth: 120,frameHeight: 120,});
   // Trilha sonora
   this.load.audio("trilha", "assets/cena1.mp3");
@@ -129,7 +128,7 @@ fase1.create = function () {
 
   // Personagens
   player1 = this.physics.add.sprite(47, 940, "player1", 0).setScale(0.4);
-  player1.setSize(36, 60, true);
+  player1.setSize(30, 60, true);
   player2 = this.physics.add.sprite(910, 940, "player2").setScale(0.4);
   player2.setSize(100, 120, true);
 
@@ -344,21 +343,16 @@ fase1.create = function () {
     .setInteractive()
     .setScrollFactor(0);
 
-    //Mapa
-  mapa = this.physics.add.sprite(640, 780, "mapa").setScale(0.5);
-
-  //Contador
-  timerText = this.add.text(16, 16, timer, {
-    fontSize: "32px",
-    fill: "#ffffff",
-  });
-  timerText.setScrollFactor(0);
   
   // Conectar no servidor via WebSocket
   socket = io();
 
   var physics = this.physics;
   var cameras = this.cameras;
+  cameras.main.setBounds(0, 0, 960, 960);
+  camera0 = this.cameras.add(0, 0, 960, 960);
+  camera0.setBounds(0, 0, 960, 960);
+  
   var time = this.time;
 // Disparar evento quando jogador entrar na partida
   socket.on("jogadores", function (jogadores) {
@@ -368,7 +362,6 @@ fase1.create = function () {
 
       // Personagens colidem com os limites da cena
       player1.setCollideWorldBounds(true);
-      mapa.setVisible(false);
 
       //physics.add.collider(player1, bot1, hitARCa, null, this);
       //physics.add.collider(player1, bot1, texto, null, this);
@@ -376,6 +369,7 @@ fase1.create = function () {
 
       // Câmera seguindo o personagem 1
       cameras.main.startFollow(player1);
+      camera0.setVisible(false);
       
 
       // D-pad: para cada direção já os eventos
@@ -449,9 +443,11 @@ fase1.create = function () {
       jogador = 2;
 
       // Personagens colidem com os limites da cena
-sombra.setVisible(false);
-player2.setCollideWorldBounds(true);
-
+      sombra.setVisible(false);
+      player2.setCollideWorldBounds(true);
+      cameras.main.setVisible(false);
+      camera0.setZoom(0.35); 
+      
       //physics.add.collider(player2, bot1, hitARCa, null, this);
 
       // Câmera seguindo o personagem 2
@@ -553,7 +549,7 @@ player2.setCollideWorldBounds(true);
       // Contagem regressiva em segundos (1.000 milissegundos)
       timer = 60;
       timedEvent = time.addEvent({
-        delay: 1000,
+        delay: 100000000,
         callback: countdown,
         callbackScope: this,
         loop: true,
@@ -602,8 +598,6 @@ player2.setCollideWorldBounds(true);
       player1.y = y;
     }
   });
-
-  inventoryText = this.add.text(10, 770, "0", { fontSize: "16px", fill: "#fff", }).setScrollFactor(0)
 };
 fase1.update = function (time, delta) {
   let frame;
@@ -640,44 +634,27 @@ fase1.update = function (time, delta) {
   sombra.y = player1.body.position.y;
 
   
+ 
   if (endgame === true) {
     socket.emit("estadoDoJogador", sala, {
       frame: frame,
+      x: player1.body.x,
+      y: player1.body.y,
       x: player2.body.x,
       y: player2.body.y,
     });
-    musicagameplay.stop();
-    this.scene.start(cena2);
-  }
- 
-   if (inventory === 7 && timer > 0 && endgame === false) {
-    socket.emit("estadoDoJogador", sala, {
-      frame: frame,
-      x: player2.body.x,
-      y: player2.body.y,
-    });
-    musicagameplay.stop();
-    this.scene.start(cena0);
-  }
- 
-   if (timer === 0) {
-    socket.emit("estadoDoJogador", sala, {
-      frame: frame,
-      x: player2.body.x,
-      y: player2.body.y,
-    });
-    musicagameplay.stop();
+    trilha.stop();
     this.scene.start(fim);
   }
+ 
 };
-function touchbot1(player1, bot1) {
-    endgame = false;
+function touchbot1(player1, bot1) { if (inventory === 1 && timer > 0 )  endgame === true
   }
   
 function countdown() {
   // Reduz o contador em 1 segundo
   timer -= 1;
-  timerText.setText(timer);
+ 
 }
 
 function collectbook(player1, book1) {
