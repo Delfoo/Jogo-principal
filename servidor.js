@@ -44,11 +44,14 @@ io.on("connection", function (socket) {
     io.emit("jogadores", jogadores);
     console.log("-Lista de jogadores: %s", jogadores);
   });
-
   socket.on("estadoDoJogador", function (estado) {
     socket.broadcast.emit("desenharOutroJogador", estado);
   });
+  socket.on("fimDaPartida", (sala) => {
+    socket.broadcast.to(sala).emit("fimDaPartida");
+  });
 });
 
+  
 app.use(express.static("./"));
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}!`));

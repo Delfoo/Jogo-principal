@@ -103,7 +103,6 @@ fase1.preload = function () {
     frameWidth: 64,
     frameHeight: 64,
   });
-  //texto = this.add.text(120, 80, "Parabéns você é gay").setVisible(false);
 };
 
 fase1.create = function () {
@@ -132,7 +131,7 @@ fase1.create = function () {
   player2 = this.physics.add.sprite(910, 940, "player2").setScale(0.4);
   player2.setSize(100, 120, true);
 
-  bot1 = this.physics.add.sprite(792, 35, "bot1").setScale(0.3);
+  bot1 = this.physics.add.sprite(912, 35, "bot1").setScale(0.3);
 
   player1.body.immovable = true;
   player2.body.immovable = true;
@@ -235,7 +234,7 @@ fase1.create = function () {
   //Itens
   book1 = this.physics.add.sprite(495, 385, "book1").setScale(0.4); //Vermelho OK
   book2 = this.physics.add.sprite(440, 567, "book2").setScale(0.4); //Amarelo OK
-  book3 = this.physics.add.sprite(913, 47, "book3").setScale(0.4);
+  book3 = this.physics.add.sprite(906, 47, "book3").setScale(0.4);
   book4 = this.physics.add.sprite(785, 272, "book4").setScale(0.4);
   book5 = this.physics.add.sprite(440, 810, "book5").setScale(0.4); //Azul OK
   book6 = this.physics.add.sprite(495, 50, "book6").setScale(0.4);
@@ -347,6 +346,11 @@ fase1.create = function () {
   // Conectar no servidor via WebSocket
   socket = io();
 
+  socket.on("connect", () =>{
+    sala = 21;
+    socket.emit("entrar-na-sala", sala)
+  })
+
   var physics = this.physics;
   var cameras = this.cameras;
   cameras.main.setBounds(0, 0, 960, 960);
@@ -448,7 +452,7 @@ fase1.create = function () {
       cameras.main.setVisible(false);
       camera0.setZoom(0.35); 
       
-      //physics.add.collider(player2, bot1, hitARCa, null, this);
+      
 
       // Câmera seguindo o personagem 2
       cameras.main.startFollow(player2);
@@ -586,6 +590,12 @@ fase1.create = function () {
     conn.addIceCandidate(new RTCIceCandidate(candidate));
   });
 
+  if (jogador === 2) {
+    socket.on("fimDaPartida", () => {
+      this.scene.start(fim);
+     });
+  }
+
   // Desenhar o outro jogador
   socket.on("desenharOutroJogador", ({ frame, x, y }) => {
     if (jogador === 1) {
@@ -635,20 +645,21 @@ fase1.update = function (time, delta) {
 
   
  
-  if (endgame === true) {
+  if (inventory === 1 && endgame === false) {
     socket.emit("estadoDoJogador", sala, {
       frame: frame,
-      x: player1.body.x,
-      y: player1.body.y,
       x: player2.body.x,
       y: player2.body.y,
     });
     trilha.stop();
     this.scene.start(fim);
+    if (jogador === 1) {
+      socket.emit("fimDaPartida", sala);
+    }
   }
- 
+  
 };
-function touchbot1(player1, bot1) { if (inventory === 1 && timer > 0 )  endgame === true
+function touchbot1(player1, bot1) { endgame === true
   }
   
 function countdown() {
